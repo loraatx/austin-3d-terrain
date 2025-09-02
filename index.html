@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Austin • 3D Terrain (MapLibre + OFM)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://unpkg.com/maplibre-gl@3.7.0/dist/maplibre-gl.css" rel="stylesheet"/>
+  <style>
+    html, body { margin:0; height:100%; }
+    #map { width:100%; height:100%; }
+    .hud {
+      position:absolute; top:10px; left:10px; z-index:1;
+      background:#fff; padding:8px 10px; border-radius:10px; font:14px/1.2 system-ui, sans-serif;
+      box-shadow:0 4px 14px rgba(0,0,0,0.15);
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="hud">
+    <div><strong>3D Terrain • Austin</strong></div>
+    <label><input id="terrainToggle" type="checkbox" checked> Terrain on</label>
+  </div>
+
+  <script src="https://unpkg.com/maplibre-gl@3.7.0/dist/maplibre-gl.js"></script>
+  <script>
+    // Austin defaults
+    const AUSTIN = { center: [-97.7431, 30.2672], zoom: 11, pitch: 60, bearing: 0 };
+
+    // OpenFreeMap styles (no keys)
+    const OFM_STYLES = {
+      OFM_2D: "https://tiles.openfreemap.org/styles/positron",
+      OFM_3D: "https://tiles.openfreemap.org/styles/liberty"
+    };
+
+    const map = new maplibregl.Map({
+      container: "map",
+      style: OFM_STYLES.OFM_2D,
+      center: AUSTIN.center,
+      zoom: AUSTIN.zoom,
+      pitch: AUSTIN.pitch,
+      bearing: AUSTIN.bearing,
+      hash: true
+    });
+
+    // Add nav + 3D free-rotate affordances
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+
+    map.on("load", () => {
+      // Public DEM tiles hosted by MapLibre
+      map.addSource("ml-dem", {
+        type: "raster-dem",
+        url: "https://demotiles.maplibre.org/terrain-tiles/tiles.json",
+        tileSize: 256
+      });
+
+      // Hillshade derived from DEM
+      map.addLayer({
+        id: "ml-hillshade",
+        type: "hillshade",
+        source: "ml-dem",
+        layout: { visibility: "visible" },
+        paint: { "hillshade-exaggeration": 0.4 }
+      });
+
+      // Enable 3D terrain
+      map.setTerrain({ source: "ml-dem", exaggeration: 1.4 });
+
+      // Smooth intro
+      map.easeTo({ pitch: 60, duration: 1200 });
+    });
+
+    // Checkbox toggle
+    const cb = document.getElementById("terrainToggle");
+    cb.addEventListener("change", () => {
+      if (cb.checked) {
+        map.setTerrain({ source: "ml-dem", exaggeration: 1.4 });
+        map.setLayoutProperty("ml-hillshade", "visibility", "visible");
+      } else {
+        map.setTerrain(null);
+        map.setLayoutProperty("ml-hillshade", "visibility", "none");
+      }
+    });
+  </script>
+</body>
+</html>

@@ -10,10 +10,22 @@
     <style>
         body { margin: 0; padding: 0; }
         html, body, #map { height: 100%; }
+        #exaggeration-control {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            font-family: sans-serif;
+            z-index: 1;
+        }
     </style>
 </head>
 <body>
 <div id="map"></div>
+<div id="exaggeration-control">
+  <label>Exaggeration: <input id="exaggeration" type="range" min="1" max="10" step="0.1" value="3" /></label>
+</div>
 <script>
     const map = (window.map = new maplibregl.Map({
         container: 'map',
@@ -65,24 +77,27 @@
                 source: 'terrainSource',
                 exaggeration: 1
             },
-            sky: {}
+            sky: {},
         },
         maxZoom: 18,
         maxPitch: 85
     }));
+
+    const exaggerationInput = document.getElementById('exaggeration');
+
+    map.on('load', () => {
+        map.setTerrain({source: 'terrainSource', exaggeration: parseFloat(exaggerationInput.value)});
+    });
+
+    exaggerationInput.addEventListener('input', () => {
+        map.setTerrain({source: 'terrainSource', exaggeration: parseFloat(exaggerationInput.value)});
+    });
 
     map.addControl(
         new maplibregl.NavigationControl({
             visualizePitch: true,
             showZoom: true,
             showCompass: true
-        })
-    );
-
-    map.addControl(
-        new maplibregl.TerrainControl({
-            source: 'terrainSource',
-            exaggeration: 1
         })
     );
 </script>
